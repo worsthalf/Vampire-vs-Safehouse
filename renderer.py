@@ -168,10 +168,22 @@ def draw_hud(screen, font, info):
     screen.blit(surf, surf.get_rect(midleft=(8, top + HUD_HEIGHT // 2)))
     draw_lives(screen, info["lives"], info["max_lives"], top)
 
+def draw_stats_panel(screen, font, info, stats):
+    lines = [
+        f"Minimax depth: {info['depth']}",
+        f"V1 Minimax: {stats['v1_states']} states, {stats['v1_time_ms']:.2f} ms",
+        f"V2 A*:      {stats['v2_states']} states, {stats['v2_time_ms']:.2f} ms",
+    ]
+    box = pygame.Surface((330, 12 + len(lines) * 20), pygame.SRCALPHA)
+    box.fill((0, 0, 0, 180))
+    screen.blit(box, (8, 8))
+    for i, text in enumerate(lines):
+        screen.blit(font.render(text, True, COLOR_TEXT), (16, 14 + i * 20))    
+
 def _center(screen, font, text, y, color):
     surf = font.render(text, True, color)
     screen.blit(surf, surf.get_rect(center=(WIDTH // 2, y)))
-    
+
 def draw_menu(screen, fonts):
     screen.fill(COLOR_BG)
     for y in range(0, HEIGHT, CELL_SIZE):
