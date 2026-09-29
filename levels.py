@@ -67,18 +67,21 @@ def _random_walls(level, target=None):
             walls.append(seg)
     return walls
 
-
-def get_level(n):
-    
+DIFFICULTY = {"Easy": (0.75, -1), "Medium": (1.0, 0), "Hard": (1.2, 1)}
+def get_level(n, difficulty="Medium"):
+    """Returns the config dict for level n (1-based)."""
+    mult, depth_delta = DIFFICULTY[difficulty]
     if n <= len(LAYOUTS):
         title, walls = LAYOUTS[n - 1]
         walls = _safe(walls)
     else:
         title, walls = GENERATED_NAMES[n - len(LAYOUTS) - 1], _random_walls(n)
+    base_speed = min(0.4 + 0.1 * (n - 1), 0.9)
+    base_depth = 2 if n < 3 else 3
     return {
         "level": n,
         "title": title,
         "walls": walls,
-        "speed": round(min(0.4 + 0.1 * (n - 1), 0.9), 2),  
-        "depth": 2 if n < 3 else 3,                        
+        "speed": round(min(base_speed * mult, 1.0), 2),
+        "depth": max(1, base_depth + depth_delta),
     }

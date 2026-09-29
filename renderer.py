@@ -184,7 +184,7 @@ def _center(screen, font, text, y, color):
     surf = font.render(text, True, color)
     screen.blit(surf, surf.get_rect(center=(WIDTH // 2, y)))
 
-def draw_menu(screen, fonts):
+def draw_menu(screen, fonts, difficulty="medium"):
     screen.fill(COLOR_BG)
     for y in range(0, HEIGHT, CELL_SIZE):
         for x in range(0, WIDTH, CELL_SIZE):
@@ -197,9 +197,18 @@ def draw_menu(screen, fonts):
         big = pygame.transform.scale(get_sprite(name), (CELL_SIZE * 3, CELL_SIZE * 3))
         screen.blit(big, big.get_rect(center=(cx, 290)))
     draw_house(screen, (7, 9))
+
+
     _center(screen, fonts["big"], "Press ENTER to Start", 430, (46, 204, 113))
-    _center(screen, fonts["mid"], "Move: W A S D / Arrow keys (one step per press)", 490, COLOR_TEXT)
-    _center(screen, fonts["mid"], "Every level: new map, faster vampires", 520, COLOR_TEXT)
+    mode_colors = {"Easy": (46, 204, 113), "Medium": COLOR_GOLD, "Hard": (255, 77, 109)}
+    for name, cx in (("Easy", WIDTH // 2 - 150), ("Medium", WIDTH // 2), ("Hard", WIDTH // 2 + 150)):
+        if name == difficulty:
+            surf = fonts["big"].render(f"< {name} >", True, mode_colors[name])
+        else:
+            surf = fonts["mid"].render(name, True, (110, 110, 125))
+        screen.blit(surf, surf.get_rect(center=(cx, 470)))
+    _center(screen, fonts["mid"], "Mode: A / D or LEFT / RIGHT", 510, COLOR_TEXT)
+    _center(screen, fonts["mid"], "Move: W A S D / Arrow keys (one step per press)", 540, COLOR_TEXT)
 
 
 def _panel(screen, fonts, title, title_color, lines, footer):

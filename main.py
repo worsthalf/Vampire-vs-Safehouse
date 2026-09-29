@@ -4,7 +4,7 @@ import pygame
 from game_state import GameState, SURVIVOR_START, SAFE_HOUSE
 from astar import next_step_towards, a_star_search, last_search
 from minimax import minimax_decide
-from levels import get_level, MAX_LEVEL
+from levels import get_level, MAX_LEVEL, DIFFICULTY
 import renderer
 import stats_logger
 
@@ -15,7 +15,6 @@ KEY_MOVES = {
     pygame.K_d: (1, 0), pygame.K_RIGHT: (1, 0),
 }
 def life_reward(level):
-    """Lives regained after completing this level."""
     if level <= 1:
         return 0
     if level <= 5:
@@ -30,7 +29,6 @@ def empty_stats():
 
 
 class Game:
-    """Screens: menu -> playing -> level_complete / caught."""
 
     def __init__(self):
         self.mode = "menu"
@@ -44,6 +42,7 @@ class Game:
         self.lives = self.max_lives
         self.life_gain = 0
         self.anim = renderer.Animator()
+        self.difficulty = "Medium"
         self.start_level(1)
         self.mode = "menu"
 
@@ -51,7 +50,7 @@ class Game:
         last_search["visited"] = set()
         last_search["path"] = []
         self.level = n
-        self.cfg = get_level(n)
+        self.cfg = get_level(n, self.difficulty)
         self.state = GameState(self.cfg["walls"], self.cfg["speed"])
         self.stats = empty_stats()
         self.anim.snap(self.state)
@@ -114,10 +113,19 @@ class Game:
 
     def handle_key(self, key):
         if self.mode == "menu":
-            if key in (pygame.K_RETURN, pygame.K_SPACE):
+            names = list(DIFFICULTY)
+            i = names.index(self.difficulty)
+            if key in (pygame.K_LEFT, pygame.K_a):
+                self.difficulty = names[(i - 1) % len(names)]
+            elif key in (pygame.K_RIGHT, pygame.K_d):
+                self.difficulty = names[(i + 1) % len(names)]
+            elif key in (pygame.K_RETURN, pygame.K_SPACE):
                 self.total_score = 0
                 self.lives = self.max_lives
                 self.start_level(1)
+
+
+
         elif self.mode == "playing":
             if key == pygame.K_r:
                 self.lives -= 1
@@ -153,10 +161,10 @@ class Game:
                 self.start_level(1)
             elif key == pygame.K_ESCAPE:
                 self.mode = "menu"        
- 
+
     def draw(self, screen, fonts):
         if self.mode == "menu":
-            renderer.draw_menu(screen, fonts)
+            renderer.draw_menu(screen, fonts, self.difficulty)
             return
         self.anim.update(self.state)
         renderer.draw_grid(screen, self.state)
