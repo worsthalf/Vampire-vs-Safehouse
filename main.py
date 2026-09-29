@@ -14,6 +14,15 @@ KEY_MOVES = {
     pygame.K_a: (-1, 0), pygame.K_LEFT: (-1, 0),
     pygame.K_d: (1, 0), pygame.K_RIGHT: (1, 0),
 }
+def life_reward(level):
+    """Lives regained after completing this level."""
+    if level <= 1:
+        return 0
+    if level <= 5:
+        return 1
+    if level <= 7:
+        return 2
+    return 3
 
 
 def empty_stats():
@@ -31,6 +40,9 @@ class Game:
         self.total_score = 0
         self.level_score = 0
         self.stars = 0
+        self.max_lives = 5
+        self.lives = self.max_lives
+        self.life_gain = 0
         self.anim = renderer.Animator()
         self.start_level(1)
         self.mode = "menu"
@@ -92,19 +104,27 @@ class Game:
             self.total_score += self.level_score
             ratio = turns / max(1, self.shortest)
             self.stars = 3 if ratio <= 1.3 else 2 if ratio <= 1.8 else 1
+            before = self.lives
+            self.lives = min(self.max_lives, self.lives + life_reward(self.level))
+            self.life_gain = self.lives - before
             self.mode = "level_complete"
         else:
-            self.mode = "caught"
+            self.lives -= 1
+            self.mode = "game_over" if self.lives <= 0 else "caught"
 
-    # Survivor input dicche
     def handle_key(self, key):
         if self.mode == "menu":
             if key in (pygame.K_RETURN, pygame.K_SPACE):
                 self.total_score = 0
+                self.lives = self.max_lives
                 self.start_level(1)
         elif self.mode == "playing":
             if key == pygame.K_r:
-                self.start_level(self.level)
+                self.lives -= 1
+                if self.lives <= 0:
+                    self.mode = "game_over"
+                else:
+                    self.start_level(self.level)
             elif key == pygame.K_ESCAPE:
                 self.mode = "menu"
             elif key in KEY_MOVES:
@@ -126,8 +146,14 @@ class Game:
                 self.start_level(self.level)
             elif key == pygame.K_ESCAPE:
                 self.mode = "menu"
-
-    # drawing 
+        elif self.mode == "game_over":
+            if key in (pygame.K_RETURN, pygame.K_r):
+                self.total_score = 0
+                self.lives = self.max_lives
+                self.start_level(1)
+            elif key == pygame.K_ESCAPE:
+                self.mode = "menu"        
+ 
     def draw(self, screen, fonts):
         if self.mode == "menu":
             renderer.draw_menu(screen, fonts)
@@ -141,17 +167,20 @@ class Game:
             "level": self.level, "title": self.cfg["title"],
             "turns": self.state.turn_count, "score": self.total_score,
             "speed": self.cfg["speed"], "depth": self.cfg["depth"],
+            "lives": self.lives, "max_lives": self.max_lives,
         }
         renderer.draw_hud(screen, fonts["small"], info)
         if self.show_stats:
             renderer.draw_stats_panel(screen, fonts["small"], info, self.stats)
         if self.mode == "level_complete":
-            renderer.draw_level_complete(screen, fonts, self.level, self.state.turn_count,
-                                         self.shortest, self.level_score,
-                                         self.total_score, self.stars,
-                                         self.level >= MAX_LEVEL)
+             renderer.draw_level_complete(screen, fonts, self.level, self.state.turn_count,
+                                    self.shortest, self.level_score,
+                                    self.total_score, self.stars,
+                                    self.level >= MAX_LEVEL, self.life_gain)
         elif self.mode == "caught":
-            renderer.draw_caught(screen, fonts, self.level, self.total_score)
+            renderer.draw_caught(screen, fonts, self.level, self.total_score, self.lives)
+        elif self.mode == "game_over":
+            renderer.draw_game_over(screen, fonts, self.level, self.total_score)
 
 
 def main():

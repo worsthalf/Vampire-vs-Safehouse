@@ -138,22 +138,40 @@ def draw_entities(screen, anim):
         screen.blit(get_sprite(name), (px * CELL_SIZE, py * CELL_SIZE))
 
 
+def draw_heart(screen, cx, cy, r, color):
+    """Small heart shape made from two circles and a triangle."""
+    pygame.draw.circle(screen, color, (cx - r // 2, cy - r // 4), r // 2 + 1)
+    pygame.draw.circle(screen, color, (cx + r // 2, cy - r // 4), r // 2 + 1)
+    pygame.draw.polygon(screen, color, [(cx - r, cy - r // 4 + 1),
+                                        (cx + r, cy - r // 4 + 1),
+                                        (cx, cy + r)])
+
+
+def draw_lives(screen, lives, max_lives, top):
+    """Hearts in the bottom-right corner of the HUD bar."""
+    spacing = 24
+    x = WIDTH - 12 - max_lives * spacing + spacing // 2
+    cy = top + HUD_HEIGHT // 2
+    for i in range(max_lives):
+        if i < lives:
+            draw_heart(screen, x + i * spacing, cy, 8, (255, 77, 109))
+        else:
+            draw_heart(screen, x + i * spacing, cy, 8, (55, 40, 52))
+
+
 def draw_hud(screen, font, info):
     top = GRID_SIZE * CELL_SIZE
     pygame.draw.rect(screen, (14, 14, 20), (0, top, WIDTH, HUD_HEIGHT))
-    text = (f"Level {info['level']}: {info['title']}   Turns: {info['turns']}   "
-            f"Score: {info['score']}   Vampire speed: x{info['speed']}")
+    text = (f"Lv {info['level']}: {info['title']}   Turns: {info['turns']}   "
+            f"Score: {info['score']}   Spd x{info['speed']}")
     surf = font.render(text, True, COLOR_GOLD)
     screen.blit(surf, surf.get_rect(midleft=(8, top + HUD_HEIGHT // 2)))
-
-
-
+    draw_lives(screen, info["lives"], info["max_lives"], top)
 
 def _center(screen, font, text, y, color):
     surf = font.render(text, True, color)
     screen.blit(surf, surf.get_rect(center=(WIDTH // 2, y)))
-
-
+    
 def draw_menu(screen, fonts):
     screen.fill(COLOR_BG)
     for y in range(0, HEIGHT, CELL_SIZE):
@@ -186,23 +204,35 @@ def _panel(screen, fonts, title, title_color, lines, footer):
     _center(screen, fonts["mid"], footer, box.bottom - 30, COLOR_GOLD)
 
 
-def draw_level_complete(screen, fonts, level, turns, shortest, level_score, total, stars, is_last=False):
+def draw_level_complete(screen, fonts, level, turns, shortest, level_score, total,
+                        stars, is_last=False, life_gain=0):
     star_text = "*" * stars + "-" * (3 - stars)
     title = "YOU WIN!" if is_last else "CONGRATULATIONS!"
     footer = "ESC: menu" if is_last else "ENTER: next level   ESC: menu"
+    life_text = f"+{life_gain} life regained!" if life_gain > 0 else "Lives: no change"
     _panel(screen, fonts, title, (46, 204, 113), [
         (f"Level {level} complete!   [{star_text}]", COLOR_GOLD),
         (f"Turns: {turns}  (best possible: {shortest})", COLOR_TEXT),
         (f"Level score: {level_score}", COLOR_TEXT),
         (f"Total score: {total}", COLOR_TEXT),
+        (life_text, (255, 77, 109) if life_gain > 0 else COLOR_TEXT),
     ], footer)
 
 
-def draw_caught(screen, fonts, level, total):
+def draw_caught(screen, fonts, level, total, lives):
     _panel(screen, fonts, "CAUGHT!", (255, 77, 109), [
         ("The vampires got you...", COLOR_TEXT),
+        (f"Lives left: {lives}", COLOR_GOLD),
         (f"Level {level}   Total score: {total}", COLOR_TEXT),
     ], "R: retry level   ESC: menu")
+
+def draw_game_over(screen, fonts, level, total):
+    _panel(screen, fonts, "GAME OVER", (255, 77, 109), [
+        ("You ran out of lives...", COLOR_TEXT),
+        (f"Reached level {level}", COLOR_TEXT),
+        (f"Final score: {total}", COLOR_GOLD),
+    ], "ENTER: restart from level 1   ESC: menu")
+
 def draw_search_overlay(screen, visited, path):
     explored = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
     explored.fill((150, 60, 220, 70))
