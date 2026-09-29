@@ -1,9 +1,3 @@
-"""
-evaluation.py
-Evaluation function used by Vampire 1's Minimax search to score
-non-terminal and terminal game states.
-"""
-
 from astar import manhattan
 
 W_SURVIVOR_TO_HOME = 1.0
@@ -12,13 +6,7 @@ W_TERMINAL_BONUS = 500
 
 
 def evaluate(state):
-    """
-    Higher scores favor Vampire 1. Rewards:
-      - keeping the Survivor far from the Safe House,
-      - Vampire 1 staying close to the Survivor,
-      - an outright capture (best possible outcome for Vampire 1),
-    and heavily penalizes the Survivor reaching the Safe House.
-    """
+   
     if state.survivor == state.vampire1 or state.survivor == state.vampire2:
         return W_TERMINAL_BONUS
 
